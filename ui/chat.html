@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+      #form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px); }
+      #input { border: none; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }
+      #input:focus { outline: none; }
+      #form > button { background: #333; border: none; padding: 0 1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
+
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages > li { padding: 0.5rem 1rem; }
+      #messages > li:nth-child(odd) { background: #efefef; }
+    </style>
+  </head>
+  <body>
+    <span id="user-count"></span>
+    <ul id="messages"></ul>
+<span id="typing-message"></span> 
+<form id="form" action="">
+  <input id="input" autocomplete="off" /><button>Send</button>
+</form>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+     // Socket.IO client setup
+      const socket = io();
+
+      // Handling user typing event
+      const typingMessage = document.getElementById('typing-message');
+      const userCountMessage = document.getElementById('user-count');
+
+      // Listen for 'user typing' event
+      socket.on('user typing', (userId) => {
+        typingMessage.textContent = `User ${userId} is typing...`;
+      });
+
+      // Listen for 'user stopped typing' event
+      socket.on('user stopped typing', () => {
+
+        console.log('STOPPED RECEIVED')
+        document.getElementById('typing-message').textContent = '';
+      });
+
+      socket.on('user count', (userCount) => {
+       userCountMessage.textContent = `Number of connected users: ${userCount}`;
+      });
+
+      // Handling chat message event
+      const messages = document.getElementById('messages');
+      const form = document.getElementById('form');
+      const input = document.getElementById('input');
+
+      // Function to handle the "user typing" event
+      const handleTyping = () => {
+        console.log('fhgsajdasdh')
+        socket.emit('typing'); // Emit the "typing" event to the server
+      };
+
+      // Function to handle the "user stop typing" event
+      const handleStopTyping = () => {
+        socket.emit('stop typing'); // Emit the "stop typing" event to the server
+      };
+
+// Listen for input events to detect typing
+input.addEventListener('input', handleTyping);
+
+      // Listen for 'chat message' event
+      socket.on('chat message', function (msg) {
+        const item = document.createElement('li');
+        item.textContent = msg;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (input.value) {
+          socket.emit('chat message', input.value);
+          input.value = '';
+          handleStopTyping()
+        }
+      });
+
+    </script>
+  </body>
+</html>
